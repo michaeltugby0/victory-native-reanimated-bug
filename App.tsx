@@ -6,113 +6,43 @@
  */
 
 import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import {CartesianChart, Line, useChartPressState} from 'victory-native';
+import {Circle, useFont} from '@shopify/react-native-skia';
+import type {SharedValue} from 'react-native-reanimated';
+import {View} from 'react-native';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+function ToolTip({x, y}: {x: SharedValue<number>; y: SharedValue<number>}) {
+  return <Circle cx={x} cy={y} r={8} color="black" />;
+}
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+const DATA = Array.from({length: 31}, (_, i) => ({
+  day: i,
+  highTmp: 40 + 30 * Math.random(),
+}));
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+export function App(): React.JSX.Element {
+  const font = useFont(require('./assets/inter-medium.ttf'), 12);
+  const {state, isActive} = useChartPressState({x: 0, y: {highTmp: 0}});
+
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+    <View style={{height: 300}}>
+      <CartesianChart
+        data={DATA}
+        xKey="day"
+        yKeys={['highTmp']}
+        axisOptions={{
+          font,
+        }}
+        chartPressState={state}>
+        {({points}) => (
+          <>
+            <Line points={points.highTmp} color="red" strokeWidth={3} />
+            {isActive && (
+              <ToolTip x={state.x.position} y={state.y.highTmp.position} />
+            )}
+          </>
+        )}
+      </CartesianChart>
     </View>
   );
 }
-
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
-
-export default App;
